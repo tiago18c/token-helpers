@@ -57,8 +57,3 @@ const { instructions, associatedTokenAddress } = await createAssociatedTokenAcco
   mintAddress
 );
 ```
-
-## License
-
-Apache-2.0
-
