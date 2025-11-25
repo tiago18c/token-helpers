@@ -1,5 +1,5 @@
 import { ASSOCIATED_TOKEN_PROGRAM_ADDRESS, TOKEN_PROGRAM_ADDRESS } from "@solana-program/token";
-import { findAssociatedTokenPda, getMintDecoder, TOKEN_2022_PROGRAM_ADDRESS, getCreateAssociatedTokenInstruction } from "@solana-program/token-2022";
+import { findAssociatedTokenPda, getMintDecoder, TOKEN_2022_PROGRAM_ADDRESS, getCreateAssociatedTokenInstruction, getCreateAssociatedTokenIdempotentInstruction } from "@solana-program/token-2022";
 import { Address, appendTransactionMessageInstructions, createTransactionMessage, fetchEncodedAccount, getSignatureFromTransaction, Instruction, isSolanaError, pipe, Rpc, RpcSubscriptions, SendableTransaction, sendAndConfirmTransactionFactory, sendTransactionWithoutConfirmingFactory, setTransactionMessageFeePayerSigner, setTransactionMessageLifetimeUsingBlockhash, signTransactionMessageWithSigners, SOLANA_ERROR__JSON_RPC__SERVER_ERROR_SEND_TRANSACTION_PREFLIGHT_FAILURE, SolanaRpcApi, SolanaRpcSubscriptionsApi, Transaction, TransactionSigner, TransactionWithBlockhashLifetime } from "@solana/kit";
 import { isTokenAclMintFromMint, createThawPermissionlessInstructionFromMint } from "@token-acl/sdk";
 
@@ -9,6 +9,7 @@ import { isTokenAclMintFromMint, createThawPermissionlessInstructionFromMint } f
  * @param payer - The address of the payer
  * @param owner - The address of the owner
  * @param mintAddress - The address of the mint
+ * @param idempotent - Whether to use idempotent instructions
  * @returns An object containing the instructions and the associated token address
  */
 export async function createAssociatedTokenAccountInstructions(
@@ -16,6 +17,7 @@ export async function createAssociatedTokenAccountInstructions(
     payer: TransactionSigner,
     owner: Address,
     mintAddress: Address,
+    idempotent: boolean = false
 ): Promise<{ instructions: Instruction[], associatedTokenAddress: Address }> {
 
     const mintAccount = await fetchEncodedAccount(rpc, mintAddress, { commitment: 'confirmed' });
@@ -30,7 +32,14 @@ export async function createAssociatedTokenAccountInstructions(
         tokenProgram: tokenProgram
     }, { programAddress: ASSOCIATED_TOKEN_PROGRAM_ADDRESS});
 
-    const createAtaInstruction = getCreateAssociatedTokenInstruction({
+    const createAtaInstruction = idempotent ? getCreateAssociatedTokenIdempotentInstruction({
+        ata: associatedTokenAddress,
+        mint: mintAddress,
+        owner: owner,
+        payer: payer,
+        tokenProgram: tokenProgram
+    }, { programAddress: ASSOCIATED_TOKEN_PROGRAM_ADDRESS})
+    : getCreateAssociatedTokenInstruction({
         ata: associatedTokenAddress,
         mint: mintAddress,
         owner: owner,
@@ -50,7 +59,7 @@ export async function createAssociatedTokenAccountInstructions(
         return { instructions: [createAtaInstruction], associatedTokenAddress: associatedTokenAddress };
     }
 
-    const thawInstruction = await createThawPermissionlessInstructionFromMint(rpc, mint, mintAddress, owner, associatedTokenAddress, payer );
+    const thawInstruction = await createThawPermissionlessInstructionFromMint(rpc, mint, mintAddress, owner, associatedTokenAddress, payer, idempotent);
 
     return { instructions: [createAtaInstruction, thawInstruction], associatedTokenAddress: associatedTokenAddress };
 }
@@ -61,6 +70,7 @@ export async function createAssociatedTokenAccountInstructions(
  * @param payer - The address of the payer
  * @param owner - The address of the owner
  * @param mintAddress - The address of the mint
+ * @param idempotent - Whether to use idempotent instructions
  * @returns An object containing the signature and the associated token address
  */
 export async function createAssociatedTokenAccount(
@@ -68,8 +78,9 @@ export async function createAssociatedTokenAccount(
     payer: TransactionSigner,
     owner: Address,
     mint: Address,
+    idempotent: boolean = false
 ): Promise<{ signature: string, associatedTokenAddress: Address }> {
-    const { instructions, associatedTokenAddress } = await createAssociatedTokenAccountInstructions(rpc, payer, owner, mint);
+    const { instructions, associatedTokenAddress } = await createAssociatedTokenAccountInstructions(rpc, payer, owner, mint, idempotent);
 
     const { value: latestBlockhash } = await rpc.getLatestBlockhash().send();
 
@@ -103,6 +114,7 @@ export async function createAssociatedTokenAccount(
  * @param payer - The address of the payer
  * @param owner - The address of the owner
  * @param mintAddress - The address of the mint
+ * @param idempotent - Whether to use idempotent instructions
  * @returns An object containing the signature and the associated token address
  */
 export async function createAndConfirmAssociatedTokenAccount(
@@ -111,8 +123,9 @@ export async function createAndConfirmAssociatedTokenAccount(
     payer: TransactionSigner,
     owner: Address,
     mint: Address,
+    idempotent: boolean = false
 ): Promise<{ signature: string, associatedTokenAddress: Address }> {
-    const { instructions, associatedTokenAddress } = await createAssociatedTokenAccountInstructions(rpc, payer, owner, mint);
+    const { instructions, associatedTokenAddress } = await createAssociatedTokenAccountInstructions(rpc, payer, owner, mint, idempotent);
 
     const { value: latestBlockhash } = await rpc.getLatestBlockhash().send();
 
