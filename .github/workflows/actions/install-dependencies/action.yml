@@ -15,9 +15,10 @@ inputs:
   rustfmt:
     description: Install Rustfmt if `true`. Defaults to `false`.
     required: false
-  solana:
-    description: Install Solana if `true`. Defaults to `false`.
+  solana_version:
+    description: "Solana version to install (leave empty to skip)"
     required: false
+    default: ""
 
 runs:
   using: composite
@@ -52,8 +53,6 @@ runs:
         components: clippy
 
     - name: Install Solana
-      if: ${{ inputs.solana == 'true' }}
-      uses: solana-program/actions/install-solana@v1
+      uses: solana-developers/github-actions/setup-all@v0.2.7
       with:
-        version: ${{ env.SOLANA_VERSION }}
-        cache: true
+        version: ${{ inputs.solana_version }}

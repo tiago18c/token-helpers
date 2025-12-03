@@ -36,7 +36,7 @@ jobs:
       - name: Install Dependencies
         uses: ./.github/workflows/actions/install-dependencies
         with:
-          solana: true
+          solana: "2.3.0"
 
       - name: Lint
         run: pnpm lint
