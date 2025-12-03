@@ -64,7 +64,7 @@ jobs:
         if: env.RELEASE_TYPE == 'regular'
         id: build-step-decider
         run: |
-          echo "step-name=${{ steps.changesets.outputs.hasChangesets == 'false' && 'publish-packages' || 'build' }}" >> "$GITHUB_OUTPUT"
+          echo "step-name=${{ steps.changesets.outputs.hasChangesets == 'false' && 'publish' || 'build' }}" >> "$GITHUB_OUTPUT"
 
       - name: Run final step
         if: env.RELEASE_TYPE == 'regular'
