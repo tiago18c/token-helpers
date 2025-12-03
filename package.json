@@ -1,7 +1,7 @@
 {
   "name": "@solana/token-helpers",
   "version": "0.1.0",
-  "description": "",
+  "description": "A set of helpers and wrappers around multiple Solana token libraries that enable developers to create token accounts with one-liners, supporting different token standards including Token Program (TokenKeg), Token-2022, and Token-ACL.",
   "sideEffects": false,
   "module": "./dist/src/index.mjs",
   "main": "./dist/src/index.js",
@@ -43,10 +43,10 @@
   "license": "Apache-2.0",
   "repository": {
     "type": "git",
-    "url": ""
+    "url": "https://github.com/solana-foundation/token-helpers"
   },
   "bugs": {
-    "url": ""
+    "url": "https://github.com/solana-foundation/token-helpers/issues"
   },
   "homepage": "",
   "devDependencies": {
